@@ -1,4 +1,6 @@
-﻿namespace TestingBolt
+﻿using Testing;
+
+namespace TestingBolt
 {
     public class DummyPacketSenderBolt : DummyPacketSender
     {

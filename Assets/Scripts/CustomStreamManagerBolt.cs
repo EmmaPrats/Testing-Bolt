@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Photon.Bolt;
+using Testing;
 using UdpKit;
 
 namespace TestingBolt
@@ -14,6 +15,8 @@ namespace TestingBolt
 
         private readonly TaskCompletionSource<bool> mIsInitialized = new TaskCompletionSource<bool>();
         public Task<bool> IsInitialized => mIsInitialized.Task;
+
+        public bool IsServer => BoltNetwork.IsServer;
 
         public override void BoltStartBegin()
         {

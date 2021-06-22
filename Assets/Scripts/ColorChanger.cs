@@ -1,10 +1,10 @@
-using Photon.Bolt;
+﻿using TestingBolt;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TestingBolt
+namespace Testing
 {
-    public class ColorChanger : MonoBehaviour
+    public abstract class ColorChanger : MonoBehaviour
     {
         [Header("Params:")]
         [SerializeField] private Color m_Color1;
@@ -15,14 +15,17 @@ namespace TestingBolt
         [SerializeField] private Image m_ServerImage;
         [SerializeField] private Image m_ClientImage;
 
-        private Menu mMenu;
-        private CustomStreamManagerBolt mStreamManagerBolt;
+        private INotifyReceivingPacketsOfLength4 mReceivedPacketOfLength4Notifier;
+        private INetTransport mNetTransport;
 
         private bool mIsConnected;
 
         private Image mImage;
         private Color mColor;
 
+        protected abstract INotifyReceivingPacketsOfLength4 GetPacketReceivedNotifier();
+        protected abstract INetTransport GetNetTransport();
+        
         private async void Start()
         {
             mColor = m_Color1;
@@ -30,13 +33,13 @@ namespace TestingBolt
 
             m_ChangeColorButton.onClick.AddListener(OnChangeColorButtonClicked);
 
-            mMenu = FindObjectOfType<Menu>();
-            mMenu.ReceivedPacketOfLength4 += OnReceivedColorChangePacket;
+            mReceivedPacketOfLength4Notifier = GetPacketReceivedNotifier();
+            mReceivedPacketOfLength4Notifier.ReceivedPacketOfLength4 += OnReceivedColorChangePacket;
 
-            mStreamManagerBolt = FindObjectOfType<CustomStreamManagerBolt>();
-            await mStreamManagerBolt.IsInitialized;
+            mNetTransport = GetNetTransport();
+            await mNetTransport.IsInitialized;
 
-            mImage = BoltNetwork.IsServer
+            mImage = mNetTransport.IsServer
                 ? m_ServerImage
                 : m_ClientImage;
 
@@ -45,7 +48,7 @@ namespace TestingBolt
 
         private void OnDestroy()
         {
-            mMenu.ReceivedPacketOfLength4 -= OnReceivedColorChangePacket;
+            mReceivedPacketOfLength4Notifier.ReceivedPacketOfLength4 -= OnReceivedColorChangePacket;
             m_ChangeColorButton.onClick.RemoveListener(OnChangeColorButtonClicked);
         }
 
@@ -84,7 +87,7 @@ namespace TestingBolt
             SetColor(mImage, mColor);
 
             if (mIsConnected)
-                mStreamManagerBolt.SendReliable(data, 4);
+                mNetTransport.SendReliable(data, 4);
         }
     }
     

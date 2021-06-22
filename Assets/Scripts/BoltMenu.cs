@@ -2,18 +2,19 @@ using System;
 using Photon.Bolt;
 using Photon.Bolt.Matchmaking;
 using Photon.Bolt.Utils;
+using Testing;
 using UdpKit;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TestingBolt
 {
-    public class Menu : GlobalEventListener
+    public class BoltMenu : GlobalEventListener, INotifyReceivingPacketsOfLength4
     {
         [SerializeField] private Button m_CreateServerButton;
         [SerializeField] private Button m_JoinServerButton;
 
-        public Action<byte[]> ReceivedPacketOfLength4;
+        public Action<byte[]> ReceivedPacketOfLength4 { get; set; }
 
         private void Start()
         {
