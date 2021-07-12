@@ -38,7 +38,7 @@ namespace TestingBolt
             BoltLauncher.StartClient();
         }
 
-        #region GlobalEventListener
+#region GlobalEventListener
 
         public override void BoltStartDone()
         {
@@ -100,6 +100,6 @@ namespace TestingBolt
                 ReceivedPacketOfLength4?.Invoke(data.Data);
         }
 
-        #endregion
+#endregion
     }
 }
