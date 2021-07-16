@@ -22,7 +22,9 @@ namespace TestingBolt
 
         public static void Log(object message, Object context = null)
         {
-            mInstance.mText.text += message.ToString() + "\n";
+            if (!string.IsNullOrEmpty(mInstance.mText.text))
+                mInstance.mText.text += "\n--------------------\n";
+            mInstance.mText.text += message.ToString();
 
             if (context == null)
                 Debug.Log(message);

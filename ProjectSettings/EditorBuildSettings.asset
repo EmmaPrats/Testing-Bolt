@@ -6,9 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/PhotonScene.unity
-    guid: 89efe2af4005cf84a95b3672e53cb577
-  - enabled: 1
     path: Assets/Scenes/BoltScene.unity
     guid: 091914c3f49d7594d9cfcdec0405b9c0
+  - enabled: 1
+    path: Assets/Scenes/PhotonScene.unity
+    guid: 89efe2af4005cf84a95b3672e53cb577
   m_configObjects: {}

@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using Photon.Bolt;
 using Photon.Bolt.Matchmaking;
 using Photon.Bolt.Utils;
 using Testing;
 using UdpKit;
+using UdpKit.Platform.Photon;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -47,23 +49,40 @@ namespace TestingBolt
             if (BoltNetwork.IsServer)
             {
                 var matchName = Guid.NewGuid().ToString();
-                BoltMatchmaking.CreateSession(sessionID: matchName);
+                
+                var roomProperties = new PhotonRoomProperties();
+                roomProperties.AddRoomProperty("PROPERTY_SET_BEFORE_CREATION_1", "qwer");
+                roomProperties.AddRoomProperty("PROPERTY_SET_BEFORE_CREATION_2", "asdf");
+
+                BoltMatchmaking.CreateSession(sessionID: matchName, roomProperties);
             }
         }
 
         public override void SessionListUpdated(Map<Guid, UdpSession> sessionList)
         {
-            MyDebug.Log("SessionListUpdated()");
+            MyDebug.Log("SessionListUpdated() :: SessionList:\n" +
+                        string.Join("\n", sessionList.Select(pair => "    " + pair.Value.Id)));
 
             foreach (var guidSession in sessionList)
             {
                 var session = guidSession.Value;
                 if (session.Source == UdpSessionSource.Photon)
                 {
-                    MyDebug.Log($"Joining session {session.Id}.");
+                    MyDebug.Log($"Joining session {session.Id} with properties:\n" +
+                                ((PhotonSession) session).Properties.ToStringContentsLineByLine(indentCount: 1));
                     BoltMatchmaking.JoinSession(session);
                 }
             }
+        }
+
+        public override void SessionCreatedOrUpdated(UdpSession session)
+        {
+            MyDebug.Log($"SessionCreatedOrUpdated(session: {session.Id})" +
+                      "\nsession.Properties:\n" +
+                      ((session as PhotonSession)?.Properties?.ToStringContentsLineByLine(indentCount: 1) ?? "NULL") +
+                      "\nBoltMatchmaking.CurrentSession.Properties:\n" +
+                      (((PhotonSession) BoltMatchmaking.CurrentSession).Properties?.ToStringContentsLineByLine(indentCount: 1) ?? "NULL") +
+                      $"\nHostObject: {session.HostObject?.GetType().Name ?? "NULL"}");
         }
 
         public override void Connected(BoltConnection connection)
