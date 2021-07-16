@@ -89,6 +89,7 @@ namespace TestingBolt
                     MyDebug.Log($"Joining session {session.Id} with properties:\n" +
                                 ((PhotonSession) session).Properties.ToStringContentsLineByLine(indentCount: 1));
                     BoltMatchmaking.JoinSession(session, player);
+                    //BoltMatchmaking.JoinSession(session.HostName, player); //IF YOU JOIN SESSION BY NAME, session FROM SessionConnected(UdpSession session) will have ID == 0, AND Properties WILL BE NULL WTF!?!?
                 }
             }
         }
@@ -159,14 +160,18 @@ namespace TestingBolt
         public override void SessionConnected(UdpSession session, IProtocolToken token) //Not called by the Server.
         {
             MyDebug.Log($"SessionConnected(session: {session?.Id}, connectionToken: {token?.GetType().Name})" +
-                        $"\nConnection Token:\n{token}");
+                        $"\nConnection Token:\n{token}" +
+                        $"\nphotonSession.Properties:" +
+                        (((PhotonSession) session)?.Properties == null
+                            ? " NULL"
+                            : $"\n{((PhotonSession) session).Properties.ToStringContentsLineByLine(indentCount: 1)}"));
 
             //NONE OF THESE APPEAR FOR ANY PLAYER!!!
             if (BoltNetwork.IsServer)
             {
                 if (session is PhotonSession photonSession)
                 {
-                    photonSession.Properties.Add("ADDED_TO_HASHTABLE_SESSION_SESSION_CONNECTED", "zxcv");
+                    photonSession.Properties?.Add("ADDED_TO_HASHTABLE_SESSION_SESSION_CONNECTED", "zxcv");
 
                     var roomProperties = new PhotonRoomProperties();
                     roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_SESSION_SESSION_CONNECTED", "qwer");
@@ -177,7 +182,7 @@ namespace TestingBolt
             {
                 if (session is PhotonSession photonSession)
                 {
-                    photonSession.Properties.Add("PROPERTY_ADDED_TO_HASHTABLE_BY_CLIENT_SESSION_SESSION_CONNECTED", "tyui");
+                    photonSession.Properties?.Add("PROPERTY_ADDED_TO_HASHTABLE_BY_CLIENT_SESSION_SESSION_CONNECTED", "tyui");
                 }
             }
 
@@ -185,7 +190,7 @@ namespace TestingBolt
             {
                 if (BoltMatchmaking.CurrentSession is PhotonSession photonSession)
                 {
-                    photonSession.Properties.Add("ADDED_TO_HASHTABLE_SESSION_CONNECTED", "zxcv");
+                    photonSession.Properties?.Add("ADDED_TO_HASHTABLE_SESSION_CONNECTED", "zxcv");
 
                     var roomProperties = new PhotonRoomProperties();
                     roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_SESSION_CONNECTED", "qwer");
@@ -196,7 +201,7 @@ namespace TestingBolt
             {
                 if (BoltMatchmaking.CurrentSession is PhotonSession photonSession)
                 {
-                    photonSession.Properties.Add("PROPERTY_ADDED_TO_HASHTABLE_BY_CLIENT_SESSION_CONNECTED", "tyui"); //Only visible on Client.
+                    photonSession.Properties?.Add("PROPERTY_ADDED_TO_HASHTABLE_BY_CLIENT_SESSION_CONNECTED", "tyui"); //Only visible on Client.
                 }
             }
         }
