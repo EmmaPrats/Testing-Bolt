@@ -42,6 +42,15 @@ namespace TestingBolt
 
 #region GlobalEventListener
 
+        public override void BoltStartBegin()
+        {
+            MyDebug.Log("BoltStartBegin()");
+
+            BoltNetwork.RegisterTokenClass<PhotonRoomProperties>(); //Not sure it's necessary...
+            BoltNetwork.RegisterTokenClass<BoltPlayer>();
+            BoltNetwork.RegisterTokenClass<AcceptToken>();
+        }
+
         public override void BoltStartDone()
         {
             MyDebug.Log("BoltStartDone()");
@@ -58,6 +67,14 @@ namespace TestingBolt
             }
         }
 
+#if UNITY_EDITOR
+        private static ulong mHardcodedLocalUID = 100;
+        private static string mHardcodedNickname = "Dev in Editor";
+#else
+        private static ulong mHardcodedLocalUID = 200;
+        private static string mHardcodedNickname = "Dev in Build";
+#endif
+
         public override void SessionListUpdated(Map<Guid, UdpSession> sessionList)
         {
             MyDebug.Log("SessionListUpdated() :: SessionList:\n" +
@@ -68,9 +85,10 @@ namespace TestingBolt
                 var session = guidSession.Value;
                 if (session.Source == UdpSessionSource.Photon)
                 {
+                    var player = new BoltPlayer(mHardcodedLocalUID, mHardcodedNickname);
                     MyDebug.Log($"Joining session {session.Id} with properties:\n" +
                                 ((PhotonSession) session).Properties.ToStringContentsLineByLine(indentCount: 1));
-                    BoltMatchmaking.JoinSession(session);
+                    BoltMatchmaking.JoinSession(session, player);
                 }
             }
         }
@@ -87,7 +105,8 @@ namespace TestingBolt
 
         public override void ConnectRequest(UdpEndPoint endpoint, IProtocolToken token)
         {
-            Debug.Log($"#### {GetType().Name} :: ConnectRequest(endpoint: {endpoint.SteamId}, token: {token?.GetType().Name})");
+            MyDebug.Log($"ConnectRequest(endpoint: {endpoint.SteamId}, token: {token?.GetType().Name})" +
+                        $"token: {token?.ToString() ?? "null"}\n");
 
             var player = (BoltPlayer) token;
 //            SetCustomRoomProperties(new Dictionary<string, string>
@@ -102,19 +121,61 @@ namespace TestingBolt
             BoltNetwork.Accept(endpoint, acceptToken);
         }
 
-        public override void Connected(BoltConnection connection)
+        public override void Connected(BoltConnection connection) //Not called by the server when they create the room.
         {
-            MyDebug.Log($"Connected(connection: {connection?.ConnectionId.ToString() ?? "null"})" +
-                        $"\nconnection.ConnectToken: {connection?.ConnectToken.ToString() ?? "null"}" +
-                        $"\nconnection.AcceptToken: {connection?.AcceptToken.ToString() ?? "null"}");
+            MyDebug.Log("Connected(connection: " +
+                        (connection == null
+                            ? "NULL)"
+                            : $"{connection.ConnectionId})" +
+                              $"\nconnection.ConnectToken: {connection.ConnectToken?.ToString() ?? "NULL"}" +
+                              $"\nconnection.AcceptToken: {connection.AcceptToken?.ToString() ?? "NULL"}"));
 
-            connection.SetStreamBandwidth(1024 * 100);
+            connection?.SetStreamBandwidth(1024 * 100);
+
+            if (BoltNetwork.IsServer)
+            {
+                if (BoltMatchmaking.CurrentSession is PhotonSession photonSession)
+                {
+                    photonSession.Properties.Add("ADDED_TO_HASHTABLE_CONNECTED", "zxcv"); //Only visible on Server.
+
+                    var roomProperties = new PhotonRoomProperties();
+                    roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_CONNECTED", "qwer"); //Visible on Client!!! (and Server ofc)
+                    BoltMatchmaking.UpdateSession(roomProperties);
+                }
+            }
+            else
+            {
+                if (BoltMatchmaking.CurrentSession is PhotonSession photonSession)
+                {
+                    photonSession.Properties.Add("PROPERTY_ADDED_TO_HASHTABLE_BY_CLIENT_CONNECTED", "tyui"); //Only visible on Client.
+                }
+            }
         }
 
         public override void SessionConnected(UdpSession session, IProtocolToken token)
         {
             MyDebug.Log($"SessionConnected(session: {session?.Id}, connectionToken: {token?.GetType().Name})" +
                         $"\nConnection Token:\n{token}");
+
+            //NONE OF THESE APPEAR FOR ANY PLAYER!!!
+            if (BoltNetwork.IsServer)
+            {
+                if (session is PhotonSession photonSession)
+                {
+                    photonSession.Properties.Add("ADDED_TO_HASHTABLE_SESSION_CONNECTED", "zxcv");
+
+                    var roomProperties = new PhotonRoomProperties();
+                    roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_SESSION_CONNECTED", "qwer");
+                    BoltMatchmaking.UpdateSession(roomProperties);
+                }
+            }
+            else
+            {
+                if (session is PhotonSession photonSession)
+                {
+                    photonSession.Properties.Add("PROPERTY_ADDED_TO_HASHTABLE_BY_CLIENT_SESSION_CONNECTED", "tyui");
+                }
+            }
         }
 
         public override void StreamDataStarted(BoltConnection connection, UdpChannelName channel, ulong streamID)
