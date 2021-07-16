@@ -103,18 +103,22 @@ namespace TestingBolt
                       $"\nHostObject: {session.HostObject?.GetType().Name ?? "NULL"}");
         }
 
-        public override void ConnectRequest(UdpEndPoint endpoint, IProtocolToken token)
+        public override void ConnectRequest(UdpEndPoint endpoint, IProtocolToken token) //Is only called if acceptMode == manual
         {
             MyDebug.Log($"ConnectRequest(endpoint: {endpoint.SteamId}, token: {token?.GetType().Name})" +
                         $"token: {token?.ToString() ?? "null"}\n");
 
             var player = (BoltPlayer) token;
-//            SetCustomRoomProperties(new Dictionary<string, string>
-//            {
-//                {CLIENT_ID, player.ID.ToString()},
-//                {CLIENT_NICKNAME, player.Nickname},
-//            });
-//            //TODO check whether friend only and isFriends before accepting.
+            if (player == null)
+                return;
+
+            if (BoltMatchmaking.CurrentSession is PhotonSession photonSession)
+            {
+                var roomProperties = new PhotonRoomProperties();
+                roomProperties.AddRoomProperty("CLIENT_ID", player.ID.ToString());
+                roomProperties.AddRoomProperty("CLIENT_NICKNAME", player.Nickname);
+                BoltMatchmaking.UpdateSession(roomProperties); //These only appear sometimes? Only if it's slow enough.
+            }
 
             var acceptToken = new AcceptToken(player, ((PhotonSession) BoltMatchmaking.CurrentSession).Properties);
             Debug.Log($"#### {GetType().Name} :: ConnectRequest() :: Accepting with token:\n{acceptToken}");
