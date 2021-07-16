@@ -85,11 +85,36 @@ namespace TestingBolt
                       $"\nHostObject: {session.HostObject?.GetType().Name ?? "NULL"}");
         }
 
+        public override void ConnectRequest(UdpEndPoint endpoint, IProtocolToken token)
+        {
+            Debug.Log($"#### {GetType().Name} :: ConnectRequest(endpoint: {endpoint.SteamId}, token: {token?.GetType().Name})");
+
+            var player = (BoltPlayer) token;
+//            SetCustomRoomProperties(new Dictionary<string, string>
+//            {
+//                {CLIENT_ID, player.ID.ToString()},
+//                {CLIENT_NICKNAME, player.Nickname},
+//            });
+//            //TODO check whether friend only and isFriends before accepting.
+
+            var acceptToken = new AcceptToken(player, ((PhotonSession) BoltMatchmaking.CurrentSession).Properties);
+            Debug.Log($"#### {GetType().Name} :: ConnectRequest() :: Accepting with token:\n{acceptToken}");
+            BoltNetwork.Accept(endpoint, acceptToken);
+        }
+
         public override void Connected(BoltConnection connection)
         {
-            MyDebug.Log($"Connected(connection: {connection.ConnectionId})");
+            MyDebug.Log($"Connected(connection: {connection?.ConnectionId.ToString() ?? "null"})" +
+                        $"\nconnection.ConnectToken: {connection?.ConnectToken.ToString() ?? "null"}" +
+                        $"\nconnection.AcceptToken: {connection?.AcceptToken.ToString() ?? "null"}");
 
             connection.SetStreamBandwidth(1024 * 100);
+        }
+
+        public override void SessionConnected(UdpSession session, IProtocolToken token)
+        {
+            MyDebug.Log($"SessionConnected(session: {session?.Id}, connectionToken: {token?.GetType().Name})" +
+                        $"\nConnection Token:\n{token}");
         }
 
         public override void StreamDataStarted(BoltConnection connection, UdpChannelName channel, ulong streamID)
