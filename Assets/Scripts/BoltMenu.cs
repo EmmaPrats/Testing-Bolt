@@ -120,11 +120,11 @@ namespace TestingBolt
                 return;
 
             //Properties set here are updated only some times. It seems that only if it's slow enough (add breakpoints).
-            if (BoltMatchmaking.CurrentSession is PhotonSession photonSession)
+            if (BoltMatchmaking.CurrentSession is PhotonSession)
             {
                 var roomProperties = new PhotonRoomProperties();
-                roomProperties.AddRoomProperty("CLIENT_ID_1", player.ID + " Server ConnectRequest()");
-                roomProperties.AddRoomProperty("CLIENT_NICKNAME_1", player.Nickname + " Server ConnectRequest()");
+                roomProperties.AddRoomProperty("CLIENT_ID", player.ID + " Server ConnectRequest()");
+                roomProperties.AddRoomProperty("CLIENT_NICKNAME", player.Nickname + " Server ConnectRequest()");
                 BoltMatchmaking.UpdateSession(roomProperties);
             }
 
@@ -150,7 +150,10 @@ namespace TestingBolt
             if (BoltNetwork.IsServer && BoltMatchmaking.CurrentSession is PhotonSession)
             {
                 var roomProperties = new PhotonRoomProperties();
-                roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_CONNECTED", "Server Connected()");
+                roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_CONNECTED_1", "Server Connected()");
+                BoltMatchmaking.UpdateSession(roomProperties);
+                roomProperties = new PhotonRoomProperties();
+                roomProperties.AddRoomProperty("ADDED_AFTER_CLIENT_JOINED_CONNECTED_2", "Server Connected()"); //This is the only one that is visible!
                 BoltMatchmaking.UpdateSession(roomProperties);
             }
         }
